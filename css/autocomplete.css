@@ -1,0 +1,7 @@
+.autoSuggestLoading {
+  position: relative;
+  margin-top: -28px;
+  margin-left: 160px;
+  height: 25px;
+  line-height: 25px;
+}

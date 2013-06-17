@@ -1,0 +1,123 @@
+<!doctype html>
+<!--/*******************
+  dcAngularUI 0.1
+  (c) 2013
+  AngularFlot may be freely distributed under the MIT license.
+********************/-->
+<html lang="en" ng-app="angularFlotDemo">
+  <head>
+    <meta charset="utf-8">
+    <title>dcAngular UI</title>
+    <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/autocomplete.css">
+    <link rel="stylesheet" href="css/flotComponent.css">
+  </head>
+  <body>
+     <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="brand" href="#">dcAngularUI</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="hero-unit">
+        <h1>AngularFlot Demo</h1>
+        <p>jQuery Flot integrated with Angular.js - Booyakasha!</p>
+        <div id="mainChart">
+          <div ng-controller="AppController">
+            <autocomplete source="autocompleteSource"
+                          choice-template="autocompleteDetails"
+                          selected-item="selectedItem" 
+                          selected-item-info="symbolInfo"
+                          class="left autocomplete"
+                          min-input="2" 
+                          restrict="true" 
+                          placeholder="Symbol Search"></autocomplete>
+            <div ng-click="clear()" class="btn right clearButton">Clear Chart</div>
+            <flot class="clear" 
+                  height="400" 
+                  style="width: 800px; height: 400px;"  
+                  iteminfo="symbolInfo" 
+                  collection="dataSet">
+            </flot>
+          </div>
+        </div>
+        <p style="margin-top:8px;float:right;"><a href="https://github.com/dmcheung/dcAngularUI" class="btn btn-primary btn-large">Learn more &raquo;</a></p>
+      </div>
+    </div>
+    <script language="javascript" type="text/javascript" src="libs/angular/angular.js"></script>
+    <script language="javascript" type="text/javascript" src="js/autocomplete.js"></script>
+    <script language="javascript" type="text/javascript" src="libs/angular/angular-resource.js"></script>
+    <script language="javascript" type="text/javascript" src="libs/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="libs/flot/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="libs/flot/jquery.flot.time.min.js"></script>
+    <script language="javascript" type="text/javascript" src="libs/flot/jquery.flot.crosshair.js"></script>
+    <script language="javascript" type="text/javascript" src="js/flotComponents.js"></script>
+    <script>
+      //Define symbol autosuggest service function to interface with autocomplete directive
+      angular.module('symbolService', ['ngResource']).
+        factory('Symbol', function($resource){
+          return $resource('/symbolSuggest/:searchTerm', {
+            searchTerm: '@searchTerm'
+          }, {
+            query: {method:'GET', params:{}, isArray:true}
+          });
+      });
+
+      //App Definition
+      var app = angular.module('angularFlotDemo',  ['symbolService','autocomplete', 'flotComponent']);
+
+
+      //Main App Controller
+      function AppController($scope, Symbol, $http) {
+        //console.log(Symbol.query({searchTerm:'yhoo'}));
+        //custom autocomplete drop down details
+        var autocompleteDetails = '<span class="autocompleteData companyName">{{choice.name}}</span>'+
+                                  '<span class="autocompleteData companySymbol">{{choice.symbol}}</span>'+
+                                  '<span class="autocompleteData companySymbol">{{choice.exchDisp}}</span>';
+
+        $scope.dataSource = 'http://localhost:3000/dat';
+        $scope.autocompleteSource = Symbol;
+        $scope.autocompleteDetails = autocompleteDetails;
+        $scope.symbolDataSet = [];
+        $scope.dataSet = [];
+        $scope.symbol=  null;
+        $scope.symbolInfo = null;
+        $scope.clear = function() {
+          console.log('clearing dataset');
+          $scope.dataSet = [];
+        };
+        $scope.$watch("symbolInfo", function(symbolData) {
+          if (symbolData) {
+            $scope.symbolInfo = symbolData;
+            $scope.getData();
+           }
+        },true);
+        $scope.getData = function() {
+          var config = {
+            url : $scope.dataSource+'/'+$scope.symbolInfo.symbol
+           }
+          $http.get(config.url, config).
+            success(function(data, status, headers, config) {
+              $scope.symbolInfo.symbolDataSet = data;
+            });
+        }
+      }
+    </script>
+  </body>
+</html>
